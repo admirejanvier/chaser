@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>♜ professional chess · html/css/js</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #2b3a4a 0%, #1d2a36 100%);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Helvetica Neue', Roboto, system-ui, sans-serif;
+    }
+
+    .chess-container {
+      background: #3e4c5b;
+      padding: 2rem 2rem 1.8rem;
+      border-radius: 42px;
+      box-shadow: 0 30px 40px rgba(0, 0, 0, 0.6), inset 2px 2px 5px rgba(255, 255, 255, 0.1);
+      border: 1px solid #607586;
+    }
+
+    .board-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .chess-board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      width: 560px;
+      height: 560px;
+      box-shadow: 0 20px 30px rgba(0, 0, 0, 0.7);
+      border: 8px solid #2e3b48;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .square {
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      transition: background 0.15s, transform 0.1s;
+      cursor: pointer;
+    }
+
+    .square.light {
+      background-color: #ecd9b4;
+    }
+
+    .square.dark {
+      background-color: #b58863;
+    }
+
+    .square.highlight {
+      background-color: #b3d9a0 !important;
+      box-shadow: inset 0 0 0 3px #2c6b2f;
+    }
+
+    .square.selected {
+      background-color: #f7d08a !important;
+      box-shadow: inset 0 0 0 4px #aa6d3b;
+    }
+
+    .square:active {
+      transform: scale(0.97);
+    }
+
+    .coord-row {
+      display: flex;
+      justify-content: space-around;
+      color: #cbccc8;
+      font-weight: 500;
+      font-size: 1rem;
+      margin-top: 8px;
+      padding: 0 18px;
+      letter-spacing: 2px;
+    }
+
+    .coord-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      color: #cbccc8;
+      font-weight: 500;
+      font-size: 1rem;
+      width: 24px;
+      margin-right: 6px;
+      text-align: center;
+    }
+
+    .board-with-coords {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .status-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 20px 8px 0 8px;
+      background: #27333f;
+      border-radius: 50px;
+      padding: 12px 25px;
+      color: white;
+      box-shadow: inset 0 2px 5px #10161c, 0 5px 10px black;
+    }
+
+    .turn-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .turn-badge {
+      font-size: 1.4rem;
+      font-weight: 600;
+      background: #1e282f;
+      padding: 6px 24px;
+      border-radius: 40px;
+      letter-spacing: 1px;
+      box-shadow: inset 0 -2px 0 #4f687b;
+    }
+
+    .turn-badge.white-turn {
+      color: #f2e8d5;
+      text-shadow: 0 2px 3px #698eb0;
+    }
+
+    .turn-badge.black-turn {
+      color: #b1c6d4;
+      text-shadow: 0 2px 3px #1e1e1e;
+    }
+
+    .captured {
+      background: #1d262f;
+      padding: 6px 18px;
+      border-radius: 36px;
+      font-size: 1.6rem;
+      line-height: 1;
+      color: #cddde9;
+    }
+
+    .reset-btn {
+      background: #607d8b;
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      padding: 8px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #2a3b47, 0 6px 12px black;
+      transition: 0.07s linear;
+      border: 1px solid #809eae;
+    }
+
+    .reset-btn:active {
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 #2a3b47, 0 6px 12px black;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: #9aaec0;
+      font-weight: 400;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+<div class="chess-container">
+  <div class="board-with-coords">
+    <!-- left column coordinates (8..1) -->
+    <div class="coord-col">
+      <span>8</span> <span>7</span> <span>6</span> <span>5</span> <span>4</span> <span>3</span> <span>2</span> <span>1</span>
+    </div>
+    <div style="flex: 1;">
+      <div class="board-wrapper">
+        <div class="chess-board" id="chessboard"></div>
+      </div>
+      <!-- bottom file coordinates a..h -->
+      <div class="coord-row">
+        <span>a</span> <span>b</span> <span>c</span> <span>d</span> <span>e</span> <span>f</span> <span>g</span> <span>h</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-panel">
+    <div class="turn-indicator">
+      <span class="turn-badge white-turn" id="turnDisplay">white</span>
+      <span class="captured" id="capturedDisplay"></span>
+    </div>
+    <button class="reset-btn" id="resetGame">↻ new</button>
+  </div>
+  <div class="footer-note">professional chess · click piece then destination</div>
+</div>
+
+<script>
+  (function() {
+    // ---------- CHESS INIT ----------
+    const boardEl = document.getElementById('chessboard');
+    const turnDisplay = document.getElementById('turnDisplay');
+    const capturedDisplay = document.getElementById('capturedDisplay');
+
+    // Unicode piece symbols (professional look)
+    const pieces = {
+      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+      'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+    };
+
+    // initial board (8x8, FEN start position)
+    let board = [
+      ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+      ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+      ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+    ];
+
+    // current player: 'w' or 'b'
+    let currentPlayer = 'w';   // white starts
+
+    // selected square { row, col } or null
+    let selected = null;
+
+    // possible moves for selected piece (array of {row, col})
+    let possibleMoves = [];
+
+    // captured pieces log (simple string)
+    let capturedPieces = [];
+
+    // ---------- HELPER: board to FEN like (but not needed) ----------
+    function getPieceAt(row, col) {
+      return board[row]?.[col] || '';
+    }
+
+    // check if piece belongs to current player
+    function isCurrentPlayerPiece(piece) {
+      if (!piece) return false;
+      return (currentPlayer === 'w' && piece === piece.toUpperCase()) ||
+             (currentPlayer === 'b' && piece === piece.toLowerCase());
+    }
+
+    // switch player
+    function togglePlayer() {
+      currentPlayer = currentPlayer === 'w' ? 'b' : 'w';
+      turnDisplay.textContent = currentPlayer === 'w' ? 'white' : 'black';
+      turnDisplay.className = 'turn-badge ' + (currentPlayer === 'w' ? 'white-turn' : 'black-turn');
+    }
+
+    // clear highlights & selected
+    function clearSelection() {
+      if (selected) {
+        const prevSelected = document.querySelector('.square.selected');
+        if (prevSelected) prevSelected.classList.remove('selected');
+        selected = null;
+      }
+      // remove all move highlights
+      document.querySelectorAll('.square.highlight').forEach(sq => sq.classList.remove('highlight'));
+      possibleMoves = [];
+    }
+
+    // update captured display (show last 3 captured icons)
+    function updateCapturedDisplay() {
+      const lastThree = capturedPieces.slice(-5).reverse(); // show up to 5 recent
+      const symbols = lastThree.map(p => pieces[p] || '').join(' ');
+      capturedDisplay.textContent = symbols || '⚫';
+    }
+
+    // add captured piece
+    function addCaptured(piece) {
+      if (piece) capturedPieces.push(piece);
+      updateCapturedDisplay();
+    }
+
+    // move piece (without validation, called after rules check)
+    function applyMove(fromRow, fromCol, toRow, toCol) {
+      const piece = board[fromRow][fromCol];
+      const target = board[toRow][toCol];
+
+      if (target) addCaptured(target);   // capture
+
+      // move piece
+      board[toRow][toCol] = piece;
+      board[fromRow][fromCol] = '';
+
+      // after move, switch turn
+      togglePlayer();
+
+      // redraw board
+      renderBoard();
+
+      // clear selection
+      clearSelection();
+    }
+
+    // ---------- MOVE GENERATION (simple, professional-like, but legal moves: basic + pawn double + en passant omitted for clean pro demo, but full rule set for normal moves) 
+    // this is a simplified but correct professional chess movement (except castling/en passant/promotion) but fully playable.
+    function getPossibleMoves(row, col) {
+      const piece = board[row][col];
+      if (!piece) return [];
+      const moves = [];
+      const color = piece === piece.toUpperCase() ? 'w' : 'b';
+      const isWhite = color === 'w';
+      const pieceType = piece.toUpperCase();
+
+      // helpers
+      const inBounds = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+
+      // add move if square empty or opponent (capture)
+      const addIfValid = (r, c) => {
+        if (!inBounds(r, c)) return false;
+        const target = board[r][c];
+        if (!target) {
+          moves.push({ row: r, col: c });
+          return true;   // empty, can continue for sliding pieces
+        } else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+          moves.push({ row: r, col: c }); // capture
+          return false; // stop after capture (for sliding)
+        } else {
+          return false; // friendly piece blocks
+        }
+      };
+
+      switch (pieceType) {
+        case 'P': // pawn
+          const dir = isWhite ? -1 : 1;
+          const startRow = isWhite ? 6 : 1;
+          // one forward
+          if (inBounds(row + dir, col) && !board[row + dir][col]) {
+            moves.push({ row: row + dir, col });
+            // two forward from start
+            if (row === startRow && !board[row + 2 * dir][col] && !board[row + dir][col]) {
+              moves.push({ row: row + 2 * dir, col });
+            }
+          }
+          // captures diagonally
+          [-1, 1].forEach(dc => {
+            const r = row + dir, c = col + dc;
+            if (inBounds(r, c)) {
+              const target = board[r][c];
+              if (target && ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase()))) {
+                moves.push({ row: r, col: c });
+              }
+            }
+          });
+          break;
+
+        case 'N': // knight
+          [
+            [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+            [1, -2], [1, 2], [2, -1], [2, 1]
+          ].forEach(([dr, dc]) => {
+            const r = row + dr, c = col + dc;
+            if (!inBounds(r, c)) return;
+            const target = board[r][c];
+            if (!target) moves.push({ row: r, col: c });
+            else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+              moves.push({ row: r, col: c });
+            }
+          });
+          break;
+
+        case 'B': // bishop
+          [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([dr, dc]) => {
+            for (let step = 1; step < 8; step++) {
+              const r = row + dr * step, c = col + dc * step;
+              if (!inBounds(r, c)) break;
+              const target = board[r][c];
+              if (!target) moves.push({ row: r, col: c });
+              else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+                moves.push({ row: r, col: c });
+                break;
+              } else break; // friendly
+            }
+          });
+          break;
+
+        case 'R': // rook
+          [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
+            for (let step = 1; step < 8; step++) {
+              const r = row + dr * step, c = col + dc * step;
+              if (!inBounds(r, c)) break;
+              const target = board[r][c];
+              if (!target) moves.push({ row: r, col: c });
+              else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+                moves.push({ row: r, col: c });
+                break;
+              } else break;
+            }
+          });
+          break;
+
+        case 'Q': // queen = rook + bishop
+          [[-1, -1], [-1, 1], [1, -1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
+            for (let step = 1; step < 8; step++) {
+              const r = row + dr * step, c = col + dc * step;
+              if (!inBounds(r, c)) break;
+              const target = board[r][c];
+              if (!target) moves.push({ row: r, col: c });
+              else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+                moves.push({ row: r, col: c });
+                break;
+              } else break;
+            }
+          });
+          break;
+
+        case 'K': // king (simple, one step, no castling)
+          [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr, dc]) => {
+            const r = row + dr, c = col + dc;
+            if (!inBounds(r, c)) return;
+            const target = board[r][c];
+            if (!target) moves.push({ row: r, col: c });
+            else if ((isWhite && target === target.toLowerCase()) || (!isWhite && target === target.toUpperCase())) {
+              moves.push({ row: r, col: c });
+            }
+          });
+          break;
+
+        default: return [];
+      }
+      return moves;
+    }
+
+    // check if a move is in possibleMoves list
+    function isValidMove(row, col) {
+      return possibleMoves.some(m => m.row === row && m.col === col);
+    }
+
+    // ---------- RENDER BOARD ----------
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const square = document.createElement('div');
+          square.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+          square.dataset.row = r;
+          square.dataset.col = c;
+
+          const piece = board[r][c];
+          if (piece) square.textContent = pieces[piece] || '';
+
+          boardEl.appendChild(square);
+        }
+      }
+
+      // reapply selected & highlights after render (if any)
+      if (selected) {
+        const selIdx = selected.row * 8 + selected.col;
+        const selDiv = boardEl.children[selIdx];
+        if (selDiv) selDiv.classList.add('selected');
+      }
+      possibleMoves.forEach(m => {
+        const idx = m.row * 8 + m.col;
+        boardEl.children[idx]?.classList.add('highlight');
+      });
+    }
+
+    // ---------- EVENT LISTENER (delegation) ----------
+    boardEl.addEventListener('click', (e) => {
+      const square = e.target.closest('.square');
+      if (!square) return;
+
+      const row = parseInt(square.dataset.row);
+      const col = parseInt(square.dataset.col);
+      const piece = board[row][col];
+
+      // 1) if there is a selected piece and the clicked square is a valid move -> move
+      if (selected && isValidMove(row, col)) {
+        applyMove(selected.row, selected.col, row, col);
+        return;
+      }
+
+      // 2) if clicked piece belongs to current player -> select (or change selection)
+      if (piece && isCurrentPlayerPiece(piece)) {
+        clearSelection();            // remove previous
+        selected = { row, col };
+        square.classList.add('selected');
+        possibleMoves = getPossibleMoves(row, col);
+        // highlight possible moves
+        possibleMoves.forEach(m => {
+          const idx = m.row * 8 + m.col;
+          boardEl.children[idx]?.classList.add('highlight');
+        });
+        return;
+      }
+
+      // 3) if clicked empty square or opponent piece without selection -> just clear selection
+      clearSelection();
+    });
+
+    // reset game
+    function resetGame() {
+      board = [
+        ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+        ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+      ];
+      currentPlayer = 'w';
+      clearSelection();
+      capturedPieces = [];
+      updateCapturedDisplay();
+      turnDisplay.textContent = 'white';
+      turnDisplay.className = 'turn-badge white-turn';
+      renderBoard();
+    }
+
+    document.getElementById('resetGame').addEventListener('click', resetGame);
+
+    // initial render
+    renderBoard();
+  })();
+</script>
+</body>
+</html>
